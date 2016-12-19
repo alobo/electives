@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>ECE Elective Picker</title>
+
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js" type="text/javascript"></script>
+  <script src="http://crossfilter.github.io/crossfilter/crossfilter.v1.min.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.0.0-beta.33/dc.js" type="text/javascript"></script>
+
+  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha256-/SIrNqv8h6QGKDuNoLGA4iret+kyesCkHGzVUUV0shc=" crossorigin="anonymous"></script>
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dc/2.0.0-beta.33/dc.css" type="text/css">
+
+</head>
+
+<body>
+
+<div class="container" style="font: 12px sans-serif;">
+  <div class="row" style="margin-bottom: 10px;">
+    <div class="col-md-12">
+      <h1>ECE(asy) NSE Picker</h1>
+      <p class="lead">Because sometimes you just want an easy elective.</p>
+      <p>Data sources: <a href="http://ugradcalendar.uwaterloo.ca/page/uWaterloo-Undergraduate-Calendar-Access">Undergrad Calendar</a> &amp; <a href="https://uwflow.com/">UWFlow</a></p>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom: 20px;">
+    <div class="col-md-2">
+      <div id="semester-offered-chart">
+        <div class="row">
+          <div class="col-md-12">
+            <h4>
+              Semester
+              <small class="text-muted">
+                &nbsp;
+                <a class="reset"
+                  href="javascript:semesterOfferedChart.filterAll();dc.redrawAll();"
+                  style="display: none;">reset</a>
+              </small>
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 col-md-offset-1">
+      <div id="easiness-chart">
+        <div class="row">
+          <div class="col-md-12">
+            <h4>
+              Easiness
+              <small class="text-muted">
+                &nbsp;
+                <span class='reset' style='display: none;'>
+                  (Current filter: <span class='filter'></span>)
+                </span>
+                &nbsp;
+                <a class="reset"
+                  href="javascript:easinessChart.filterAll();dc.redrawAll();"
+                  style="display: none;">reset</a>
+              </small>
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 col-md-offset-1">
+      <div id="easiness-count-chart">
+        <div class="row">
+          <div class="col-md-12">
+            <h4>
+              Easiness Count
+              <small class="text-muted">
+                &nbsp;
+                <span class='reset' style='display: none;'>
+                  (Current filter: <span class='filter'></span>)
+                </span>
+                &nbsp;
+                <a class="reset"
+                  href="javascript:easinessCountChart.filterAll();dc.redrawAll();"
+                  style="display: none;">reset</a>
+              </small>
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row" style="margin-bottom: 15px;">
+    <div class="col-md-12">
+      <table class="table table-hover" id="dc-table-graph">
+        <thead>
+          <tr class="header">
+            <th>course</th>
+            <th>ece list</th>
+            <th>name</th>
+            <th>offered</th>
+            <th>easiness_rating</th>
+            <th>easiness_count</th>
+            <th>usefulness_rating</th>
+            <th>usefulness_count</th>
+            <th>interest_rating</th>
+            <th>interest_count</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+
+var cf;
+
+// Setup the charts
+var semesterOfferedChart = dc.pieChart("#semester-offered-chart");
+var easinessChart = dc.barChart('#easiness-chart');
+var easinessCountChart = dc.barChart('#easiness-count-chart');
+var dataTable = dc.dataTable("#dc-table-graph");
+
+var offeredDimension;
+var easinessDimension;
+var easinessCountDimension;
+
+// load data from a csv file
+d3.csv("nse.csv", function (data) {
+
+  var numberFormat = d3.format('.2f');
+
+  // Preprocess the data
+  data.forEach(function(d) {
+    // Convert to boolean
+    d.offered_w = (d.offered_w === "True") ? true : false;
+    d.offered_s = (d.offered_s === "True") ? true : false;
+    d.offered_f = (d.offered_f === "True") ? true : false;
+
+    d.offered = []
+    if (d.offered_w) d.offered.push("W");
+    if (d.offered_s) d.offered.push("S");
+    if (d.offered_f) d.offered.push("F");
+
+    // Convert to integers
+    d.easiness_count = parseInt(d.easiness_count);
+    d.usefulness_count = parseInt(d.usefulness_count);
+    d.interest_count = parseInt(d.interest_count);
+
+    d.easiness_rating = Math.round(d.easiness_rating * 100);
+    d.usefulness_rating = Math.round(d.usefulness_rating * 100);
+    d.interest_rating = Math.round(d.interest_rating * 100);
+
+  });
+
+  // Run the data through crossfilter
+  cf = crossfilter(data);
+
+  // Create dataTable dimensions
+  offeredDimension = cf.dimension(function(d) { return d.offered });
+  easinessDimension = cf.dimension(function(d) { return d.easiness_rating; });
+  easinessCountDimension = cf.dimension(function(d) { return d.easiness_count; });
+
+  //http://stackoverflow.com/a/20172877/1263256
+  function reduceAdd(p, v) {
+    if (v.offered[0] === "") return p;    // skip empty values
+    v.offered.forEach (function(val, idx) {
+       p[val] = (p[val] || 0) + 1; //increment counts
+    });
+    return p;
+  }
+
+  function reduceRemove(p, v) {
+    if (v.offered[0] === "") return p;    // skip empty values
+    v.offered.forEach (function(val, idx) {
+       p[val] = (p[val] || 0) - 1; //decrement counts
+    });
+    return p;
+  }
+
+  function reduceInitial() {
+    return {};
+  }
+
+  var offeredGroup = offeredDimension.groupAll().reduce(reduceAdd, reduceRemove, reduceInitial).value();
+
+  // hack to make dc.js charts work
+  offeredGroup.all = function() {
+    var newObject = [];
+    for (var key in this) {
+      if (this.hasOwnProperty(key) && key != "all") {
+        newObject.push({
+          key: key,
+          value: this[key]
+        });
+      }
+    }
+    return newObject;
+  };
+
+  semesterOfferedChart
+     .width(180)
+     .height(180)
+     .radius(80)
+     .innerRadius(30)
+     .dimension(offeredDimension)
+     .group(offeredGroup)
+     .filterHandler (function (dimension, filters) {
+        dimension.filter(null);
+        if (filters.length === 0)
+          dimension.filter(null);
+        else
+          dimension.filterFunction(function (d) {
+            for (var i=0; i < d.length; i++) {
+              if (filters.indexOf(d[i]) >= 0) return true;
+            }
+            return false;
+        });
+        return filters;
+      });
+
+
+  easinessChart
+     .width(420)
+     .height(180)
+     .margins({top: 10, right: 50, bottom: 30, left: 40})
+     .dimension(easinessDimension)
+     .group(easinessDimension.group())
+     .elasticY(true)
+     .centerBar(true)
+     .gap(1)
+     .round(dc.round.floor)
+     .alwaysUseRounding(true)
+     .x(d3.scale.linear().domain([0, 100]))
+     .renderHorizontalGridLines(true)
+     .filterPrinter(function (filters) {
+         var filter = filters[0], s = '';
+         s += numberFormat(filter[0]) + '% -> ' + numberFormat(filter[1]) + '%';
+         return s;
+     });
+  easinessChart.xAxis().tickFormat(function (v) { return v + '%'; });
+  easinessChart.yAxis().tickFormat(d3.format("d"));
+  easinessChart.yAxis().ticks(5);
+
+  maxEasinessCount = easinessCountDimension.top(1)[0].easiness_count;
+
+  easinessCountChart
+     .width(420)
+     .height(180)
+     .margins({top: 10, right: 50, bottom: 30, left: 40})
+     .dimension(easinessCountDimension)
+     .group(easinessCountDimension.group())
+     .elasticY(true)
+     .centerBar(true)
+     .gap(1)
+     .round(dc.round.floor)
+     .alwaysUseRounding(true)
+     .x(d3.scale.linear().domain([0, maxEasinessCount]))
+     .renderHorizontalGridLines(true)
+     .filterPrinter(function (filters) {
+         var filter = filters[0], s = '';
+         s += filter[0] + ' -> ' + filter[1];
+         return s;
+     });
+  easinessCountChart.xAxis().tickFormat(d3.format("d"));
+  easinessCountChart.yAxis().tickFormat(d3.format("d"));
+  easinessCountChart.yAxis().ticks(5);
+
+  dataTable.width(960).height(800)
+    .dimension(easinessDimension)
+    .group(function(d) { return "Courses" })
+    .size(50)
+    .columns([
+      function(d) { return d.course; },
+      function(d) { return d.list; },
+      function(d) { return d.name; },
+      function(d) { return d.offered.join(", "); },
+      function(d) { return d.easiness_rating; },
+      function(d) { return d.easiness_count; },
+      function(d) { return d.usefulness_rating; },
+      function(d) { return d.usefulness_count; },
+      function(d) { return d.interest_rating; },
+      function(d) { return d.interest_count; },
+    ])
+    .sortBy(function(d){ return d.easiness_rating; })
+    .order(d3.descending);
+
+  // Render the Charts
+  dc.renderAll();
+
+  // $("#dc-table-graph").on("click", ".data-table-col", function() {
+  //   var column = $(this).attr("data-col");
+  //   dataDim.dispose();
+  //   dataDim = xf.dimension(function(d) {return d[column];});
+  //   dataTable.dimension(dataDim)
+  //   dataTable.sortBy(function(d) {
+  //     return d[column];
+  //   });
+  //   dataTable.redraw();
+  // });
+
+});
+
+</script>
+
+</body>
+</html>
