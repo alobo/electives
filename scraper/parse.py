@@ -33,14 +33,15 @@ def getCourseDataUW(course):
     # s.hooks = {'response': make_throttle_hook()}
 
     r = requests.get(url)
-    print r.from_cache
+    print(r.from_cache)
+    print(r)
 
     soup = BeautifulSoup(r.text, 'html.parser')
     for table in soup.find_all('table'):
         if table.tr is None: continue
         if table.tr.td.b.a is None: continue
         if table.tr.td.b.a['name'] == course.replace(' ', ''):
-            # print table.prettify()
+            # print(table.prettify())
             data = {}
             td = table.find_all('td')
             data['name'] = td[2].text
@@ -64,7 +65,7 @@ def getCourseDataFlow(course_code):
     url = 'https://uwflow.com/api/v1/courses/{}'.format(course_code.lower().replace(' ', ''))
 
     r = requests.get(url)
-    print r.from_cache
+    print(r.from_cache)
 
     data = {}
     for rating in r.json()['ratings']:
@@ -79,7 +80,7 @@ def getCourseDataFlow(course_code):
 # list1 = {}
 # with open('nse_intensive.html', 'r') as f:
 #     html_doc = f.read()
-# # print html_doc
+# # print(html_doc)
 # soup = BeautifulSoup(html_doc, 'html.parser')
 #
 # for row in soup.find(id='list1').find_all('tr'):
@@ -87,25 +88,25 @@ def getCourseDataFlow(course_code):
 #     list1[row.td.a.text] = {
 #         'url': row.td.a['href']
 #     }
-#     print('{}\t{}'.format(row.td.a.text, row.td.a['href']))
+#     print('{}\t{}'.format(row.td.a.text, row.td.a['href'])))
 
 
 # getCourseDataFlow('ECE404')
 # getCourseDataFlow('ECE327')
 
-with open('list_1.txt', 'r') as f:
+with open('list_4a.txt', 'r') as f:
     courses = f.read().splitlines()
 
 output = []
 for course in courses:
-    print 'Processing {}'.format(course)
+    print('Processing {}'.format(course))
     data = {}
     data['course'] = course
     data.update(getCourseDataUW(course))
     data.update(getCourseDataFlow(course))
-    print data
+    print(data)
     output.append(data)
-    # import time; time.sleep(5)
+    import time; time.sleep(5)
 
 # Dump csv
 # TODO: use https://docs.python.org/3/library/csv.html#csv.DictWriter to preserve ordering
