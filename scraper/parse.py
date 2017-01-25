@@ -12,7 +12,7 @@ def getCourseDataFlow(course_code):
     url = 'https://uwflow.com/api/v1/courses/{}'.format(course_code.lower().replace(' ', ''))
 
     r = requests.get(url)
-    print(r.from_cache)
+    print('Got result from cache: {}'.format(r.from_cache))
 
     if 'Offered' in r.json()['description']:
         m = re.search('Offered:(.*)]', r.json()['description'])
@@ -31,7 +31,7 @@ def getCourseDataFlow(course_code):
     for rating in r.json()['ratings']:
         data['{}_count'.format(rating['name'])] = rating['count']
         data['{}_rating'.format(rating['name'])] = rating['rating']
-    return data
+    return r.from_cache, data
 
 output = []
 with open('ece_courses.csv', 'r') as f:
@@ -40,10 +40,13 @@ with open('ece_courses.csv', 'r') as f:
         print('Processing {}'.format(course))
         data = {}
         data['course'] = course
-        data.update(getCourseDataFlow(course))
+        cached, flow_course_data = getCourseDataFlow(course)
+        data.update(flow_course_data)
         print(data)
         output.append(data)
-        import time; time.sleep(5)
+
+        # Only sleep between network requests
+        if not cached: time.sleep(5)
 
 # Dump csv
 # TODO: use https://docs.python.org/3/library/csv.html#csv.DictWriter to preserve ordering
