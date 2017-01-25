@@ -29,10 +29,6 @@ def getCourseDataFlow(course_code):
     }
 
     for rating in r.json()['ratings']:
-        # data[rating['name']] = {
-        #     'count': rating['count'],
-        #     'rating': rating['rating']
-        # }
         data['{}_count'.format(rating['name'])] = rating['count']
         data['{}_rating'.format(rating['name'])] = rating['rating']
     return data
