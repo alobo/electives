@@ -7,59 +7,6 @@ from bs4 import BeautifulSoup
 
 requests_cache.install_cache('course_cache')
 
-def make_throttle_hook(timeout=5.0):
-    """
-    Returns a response hook function which sleeps for `timeout` seconds if
-    response is not cached
-    """
-    def hook(response, *args, **kwargs):
-        if not getattr(response, 'from_cache', False):
-            print('sleeping')
-            time.sleep(timeout)
-        return response
-    return hook
-
-def getDepartment(course_code):
-    """Isolates department from course code
-    Returns None if a valid department is not found
-    """
-    # TODO: Validate the department
-    return filter(lambda x: x.isalpha(), course_code)
-
-def getCourseDataUW(course):
-    url = 'http://www.ucalendar.uwaterloo.ca/{}/COURSE/course-{}.html'.format(1617, getDepartment(course))
-
-    # s = requests_cache.CachedSession()
-    # s.hooks = {'response': make_throttle_hook()}
-
-    r = requests.get(url)
-    print(r.from_cache)
-    print(r)
-
-    soup = BeautifulSoup(r.text, 'html.parser')
-    for table in soup.find_all('table'):
-        if table.tr is None: continue
-        if table.tr.td.b.a is None: continue
-        if table.tr.td.b.a['name'] == course.replace(' ', ''):
-            # print(table.prettify())
-            data = {}
-            td = table.find_all('td')
-            data['name'] = td[2].text
-            data['description'] = td[3].text
-            # Add on data if it is in adjacent cell
-            if 'Offered' in td[4].text: data['description'] += td[4].text
-
-            if 'Offered' in data['description']:
-                m = re.search('\Offered:(.*)]', data['description'])
-                offered = m.group(1).strip().split(',')
-            else:
-                offered = ''
-
-            data['offered_w'] = 'W' in offered
-            data['offered_s'] = 'S' in offered
-            data['offered_f'] = 'F' in offered
-            return data
-
 def getCourseDataFlow(course_code):
     """Get UWFlow ratings"""
     url = 'https://uwflow.com/api/v1/courses/{}'.format(course_code.lower().replace(' ', ''))
@@ -67,7 +14,20 @@ def getCourseDataFlow(course_code):
     r = requests.get(url)
     print(r.from_cache)
 
-    data = {}
+    if 'Offered' in r.json()['description']:
+        m = re.search('Offered:(.*)]', r.json()['description'])
+        offered = m.group(1).strip().split(',')
+    else:
+        offered = ''
+
+    data = {
+        'name': r.json()['name'],
+        'description': r.json()['description'],
+        'offered_w': 'W' in offered,
+        'offered_s': 'S' in offered,
+        'offered_f': 'F' in offered
+    }
+
     for rating in r.json()['ratings']:
         # data[rating['name']] = {
         #     'count': rating['count'],
@@ -77,36 +37,17 @@ def getCourseDataFlow(course_code):
         data['{}_rating'.format(rating['name'])] = rating['rating']
     return data
 
-# list1 = {}
-# with open('nse_intensive.html', 'r') as f:
-#     html_doc = f.read()
-# # print(html_doc)
-# soup = BeautifulSoup(html_doc, 'html.parser')
-#
-# for row in soup.find(id='list1').find_all('tr'):
-#     if row.td == None: continue
-#     list1[row.td.a.text] = {
-#         'url': row.td.a['href']
-#     }
-#     print('{}\t{}'.format(row.td.a.text, row.td.a['href'])))
-
-
-# getCourseDataFlow('ECE404')
-# getCourseDataFlow('ECE327')
-
-with open('list_4a.txt', 'r') as f:
-    courses = f.read().splitlines()
-
 output = []
-for course in courses:
-    print('Processing {}'.format(course))
-    data = {}
-    data['course'] = course
-    data.update(getCourseDataUW(course))
-    data.update(getCourseDataFlow(course))
-    print(data)
-    output.append(data)
-    import time; time.sleep(5)
+with open('ece_courses.csv', 'r') as f:
+    reader = csv.reader(f)
+    for [course_list, course] in reader:
+        print('Processing {}'.format(course))
+        data = {}
+        data['course'] = course
+        data.update(getCourseDataFlow(course))
+        print(data)
+        output.append(data)
+        import time; time.sleep(5)
 
 # Dump csv
 # TODO: use https://docs.python.org/3/library/csv.html#csv.DictWriter to preserve ordering
