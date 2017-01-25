@@ -39,6 +39,7 @@ with open('ece_courses.csv', 'r') as f:
     for [course_list, course] in reader:
         print('Processing {}'.format(course))
         data = {}
+        data['list'] = course_list
         data['course'] = course
         cached, flow_course_data = getCourseDataFlow(course)
         data.update(flow_course_data)
@@ -53,6 +54,7 @@ with open('ece_courses.csv', 'r') as f:
 with open('output.csv', 'w') as f:
     fieldnames = [
         'course',
+        'list',
         'name',
         'offered_w',
         'offered_s',

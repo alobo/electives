@@ -96,7 +96,25 @@
 
   <div class="row" style="margin-bottom: 20px;">
     <div class="col-md-2">
-
+      <div id="checkbox-filter">
+        <div class="row">
+          <div class="col-md-12">
+            <h4>
+              List
+              <small class="text-muted">
+                &nbsp;
+                <span class='reset' style='display: none;'>
+                  (Current filter: <span class='filter'></span>)
+                </span>
+                &nbsp;
+                <a class="reset"
+                  href="javascript:usefulnessChart.filterAll();dc.redrawAll();"
+                  style="display: none;">reset</a>
+              </small>
+            </h4>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="col-md-4 col-md-offset-1">
@@ -179,12 +197,13 @@ var usefulnessChart = dc.barChart('#usefulness-chart');
 var usefulnessCountChart = dc.barChart('#usefulness-count-chart');
 var dataTable = dc.dataTable("#dc-table-graph");
 
+var listDimension;
 var offeredDimension;
 var easinessDimension;
 var easinessCountDimension;
 
 // load data from a csv file
-d3.csv("nse.csv", function (data) {
+d3.csv("output.csv", function (data) {
 
   var numberFormat = d3.format('.2f');
 
@@ -215,11 +234,40 @@ d3.csv("nse.csv", function (data) {
   cf = crossfilter(data);
 
   // Create dataTable dimensions
+  listDimension = cf.dimension(function(d) { return d.list });
   offeredDimension = cf.dimension(function(d) { return d.offered });
   easinessDimension = cf.dimension(function(d) { return d.easiness_rating; });
   easinessCountDimension = cf.dimension(function(d) { return d.easiness_count; });
   usefulnessDimension = cf.dimension(function(d) { return d.usefulness_rating; });
   usefulnessCountDimension = cf.dimension(function(d) { return d.usefulness_count; });
+
+
+  listDimension.group().all().forEach(function (val, idx){
+    $('<div>', {'class':'checkbox'}).append(
+      $('<label>').append(
+        $('<input/>', {
+            'type':'checkbox',
+            'name':'listGroup',
+            'id': val.key,
+            'checked': 'checked'
+          }
+        ).on('change', function(){
+
+          // Build a list of all selected list ids
+          var selectedLists = [];
+          $.each($('input[name="listGroup"]:checked'), function(i, item){
+            selectedLists.push(item.id);
+          });
+
+          // Filter on list id
+          listDimension.filterFunction(function (d) { return selectedLists.indexOf(d) > -1 });
+          dc.redrawAll();
+        })
+      ).append(
+        val.key
+      )
+    ).appendTo('#checkbox-filter');
+  });
 
   //http://stackoverflow.com/a/20172877/1263256
   function reduceAdd(p, v) {
@@ -389,7 +437,7 @@ d3.csv("nse.csv", function (data) {
       function(d) { return d.interest_rating; },
       function(d) { return d.interest_count; },
     ])
-    .sortBy(function(d){ return d.easiness_rating; })
+    .sortBy(function(d){ return d.usefulness_rating; })
     .order(d3.descending);
 
   // Render the Charts
