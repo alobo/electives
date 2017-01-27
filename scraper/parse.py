@@ -15,7 +15,7 @@ def getCourseDataFlow(course_code):
     print('Got result from cache: {}'.format(r.from_cache))
 
     if 'Offered' in r.json()['description']:
-        m = re.search('Offered:(.*)]', r.json()['description'])
+        m = re.search('Offered:?(.*)', r.json()['description'])
         offered = m.group(1).strip().split(',')
     else:
         offered = ''
