@@ -33,7 +33,7 @@
 <div class="container" style="font: 12px sans-serif;">
   <div class="row" style="margin-bottom: 10px;">
     <div class="col-md-12">
-      <h1>ECE(asy) NSE Picker</h1>
+      <h1>ECE(asy) Course Picker</h1>
       <p class="lead">Because sometimes you just want an easy elective.</p>
       <p>Data sources: <a href="https://ugradcalendar.uwaterloo.ca/page/uWaterloo-Undergraduate-Calendar-Access">Undergrad Calendar</a> &amp; <a href="https://uwflow.com/">UWFlow</a></p>
     </div>
@@ -351,6 +351,7 @@ d3.csv("output.csv", function (data) {
      .alwaysUseRounding(true)
      .x(d3.scale.linear().domain([0, 101])) // Hack, because I don't know how to get <= 100
      .y(d3.scale.sqrt())
+     .yAxisLabel('Courses')
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
@@ -376,6 +377,7 @@ d3.csv("output.csv", function (data) {
      .alwaysUseRounding(true)
      .x(d3.scale.sqrt().domain([0, maxEasinessCount]))
      .y(d3.scale.sqrt())
+     .yAxisLabel('Courses')
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
@@ -399,6 +401,7 @@ d3.csv("output.csv", function (data) {
      .alwaysUseRounding(true)
      .x(d3.scale.linear().domain([0, 101])) // Hack, because I don't know how to get <= 100
      .y(d3.scale.sqrt())
+     .yAxisLabel('Courses')
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
@@ -424,6 +427,7 @@ d3.csv("output.csv", function (data) {
      .alwaysUseRounding(true)
      .x(d3.scale.sqrt().domain([0, maxEasinessCount]))
      .y(d3.scale.sqrt())
+     .yAxisLabel('Courses')
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
