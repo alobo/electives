@@ -350,6 +350,7 @@ d3.csv("output.csv", function (data) {
      .round(dc.round.floor)
      .alwaysUseRounding(true)
      .x(d3.scale.linear().domain([0, 101])) // Hack, because I don't know how to get <= 100
+     .y(d3.scale.sqrt())
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
@@ -373,7 +374,8 @@ d3.csv("output.csv", function (data) {
      .gap(1)
      .round(dc.round.floor)
      .alwaysUseRounding(true)
-     .x(d3.scale.linear().domain([0, maxEasinessCount]))
+     .x(d3.scale.sqrt().domain([0, maxEasinessCount]))
+     .y(d3.scale.sqrt())
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
@@ -396,6 +398,7 @@ d3.csv("output.csv", function (data) {
      .round(dc.round.floor)
      .alwaysUseRounding(true)
      .x(d3.scale.linear().domain([0, 101])) // Hack, because I don't know how to get <= 100
+     .y(d3.scale.sqrt())
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
@@ -419,7 +422,8 @@ d3.csv("output.csv", function (data) {
      .gap(1)
      .round(dc.round.floor)
      .alwaysUseRounding(true)
-     .x(d3.scale.linear().domain([0, maxEasinessCount]))
+     .x(d3.scale.sqrt().domain([0, maxEasinessCount]))
+     .y(d3.scale.sqrt())
      .renderHorizontalGridLines(true)
      .filterPrinter(function (filters) {
          var filter = filters[0], s = '';
