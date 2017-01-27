@@ -426,7 +426,7 @@ d3.csv("output.csv", function (data) {
     .group(function(d) { return "Courses" })
     .size(50)
     .columns([
-      function(d) { return d.course; },
+      function(d) { return '<a href="https://uwflow.com/course/' + d.course.toLowerCase().replace(/\s/g, '') + '">' + d.course + '</a>'; },
       function(d) { return d.list; },
       function(d) { return d.name; },
       function(d) { return d.offered.join(", "); },
