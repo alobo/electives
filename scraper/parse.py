@@ -49,6 +49,10 @@ with open('ece_courses.csv', 'r') as f:
         # Only sleep between network requests
         if not cached: time.sleep(5)
 
+# Cleanup formattting
+for row in output:
+    row['description'] = row['description'].encode('utf-8')
+
 # Dump csv
 # TODO: use https://docs.python.org/3/library/csv.html#csv.DictWriter to preserve ordering
 with open('output.csv', 'w') as f:
